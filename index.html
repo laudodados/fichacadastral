@@ -438,15 +438,9 @@
                         text: 'Segue a ficha cadastral preenchida.',
                         files: [file]
                     });
-                } else {
-                    // Se o navegador barrar o compartilhamento (por estar offline ou no Windows), avisa e baixa o arquivo
-                    alert("O seu navegador bloqueou o compartilhamento direto (comum ao abrir o arquivo direto da pasta no computador).\n\nO documento será baixado para você enviá-lo manualmente.");
-                    html2pdf().set(pdfOptions).from(element).save();
-                }
+                } 
             } catch (error) {
                 console.error("Erro ao tentar compartilhar:", error);
-                alert("Ocorreu um bloqueio de segurança ao tentar compartilhar. O documento será baixado em vez disso.");
-                html2pdf().set(pdfOptions).from(element).save();
             }
         }
     </script>
