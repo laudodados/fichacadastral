@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha Cadastral - Sodramar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --dark-blue: #0b1d3a;
+            --border-color: #ccc;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+        }
+
+        /* TELA 1: FORMULÁRIO DE PREENCHIMENTO */
+        #tela-formulario {
+            width: 100%;
+            max-width: 700px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+        #tela-formulario h2 {
+            color: var(--dark-blue);
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+        }
+        .form-group.full-width {
+            min-width: 100%;
+        }
+        .form-group label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .form-group input[type="text"], .form-group input[type="date"], .form-group input[type="email"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .btn-gerar {
+            width: 100%;
+            background-color: var(--dark-blue);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        /* TELA 2: FICHA PRONTA */
+        #tela-etiqueta {
+            display: none; 
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #etiqueta-container {
+            width: 100%;
+            max-width: 800px;
+            background: #fff;
+            border: 1px solid #000;
+            box-sizing: border-box;
+        }
+
+        /* Cabeçalho com Logo */
+        .header {
+            background-color: var(--dark-blue);
+            color: #fff;
+            text-align: center;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-placeholder {
+            max-height: 60px;
+            object-fit: contain;
+        }
+        .header h1 { margin: 0; font-size: 18px; text-transform: uppercase; }
+        .header h2 { font-weight: normal; margin: 0; font-size: 14px; text-transform: uppercase; }
+
+        /* Texto LGPD */
+        .lgpd-text {
+            font-size: 11px;
+            color: #444;
+            padding: 15px;
+            text-align: justify;
+            line-height: 1.4;
+            border-bottom: 2px solid var(--dark-blue);
+            background-color: #fcfcfc;
+        }
+
+        /* Linhas e Células da Ficha */
+        .row {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .row:last-of-type { border-bottom: none; }
+        
+        .col {
+            flex: 1;
+            padding: 10px;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        .col:last-child { border-right: none; }
+
+        .lbl-titulo {
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .dado-etiqueta {
+            font-size: 14px;
+            color: #000;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        /* Rodapé de Autorização */
+        .footer-autorizacao {
+            background-color: var(--dark-blue);
+            color: #fff;
+            padding: 12px;
+            font-size: 13px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Botões de Ação */
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.8; }
+        .btn-print { background-color: #0275d8; }
+        .btn-share { background-color: #25d366; }
+        .btn-voltar { background-color: #6c757d; }
+
+        /* REGRAS DE IMPRESSÃO IMPORTANTES */
+        @media print {
+            body { 
+                background: white; 
+                padding: 0; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            .actions, #tela-formulario { display: none !important; }
+            #tela-etiqueta { display: flex !important; }
+            
+            #etiqueta-container { border: 1px solid #000 !important; }
+            .row { border-bottom: 1px solid #ccc !important; }
+            .col { border-right: 1px solid #ccc !important; }
+            .row:last-of-type { border-bottom: none !important; }
+            .col:last-child { border-right: none !important; }
+            .lgpd-text { border-bottom: 2px solid var(--dark-blue) !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <form id="tela-formulario" onsubmit="gerarEtiqueta(event)">
+        <h2>Cadastro do Consumidor Final</h2>
+        
+        <div class="form-group full-width">
+            <label>Consumidor Final (Nome ou Razão Social)</label>
+            <input type="text" id="in-nome" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>CNPJ / CPF</label>
+                <input type="text" id="in-doc1" required>
+            </div>
+            <div class="form-group">
+                <label>Inscrição Estadual / RG</label>
+                <input type="text" id="in-doc2" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="date" id="in-nasc">
+            </div>
+            <div class="form-group">
+                <label>Telefone</label>
+                <input type="text" id="in-tel" required>
+            </div>
+            <div class="form-group">
+                <label>Celular</label>
+                <input type="text" id="in-cel" required>
+            </div>
+        </div>
+
+        <div class="form-group full-width">
+            <label>E-mail</label>
+            <input type="email" id="in-email" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="flex: 2;">
+                <label>Endereço</label>
+                <input type="text" id="in-endereco" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Complemento</label>
+                <input type="text" id="in-comp">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Bairro</label>
+                <input type="text" id="in-bairro" required>
+            </div>
+            <div class="form-group">
+                <label>Cidade</label>
+                <input type="text" id="in-cidade" required>
+            </div>
+            <div class="form-group" style="min-width: 100px;">
+                <label>Estado</label>
+                <input type="text" id="in-estado" maxlength="2" placeholder="UF" required>
+            </div>
+            <div class="form-group" style="min-width: 120px;">
+                <label>CEP</label>
+                <input type="text" id="in-cep" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-gerar">Gerar Ficha Cadastral</button>
+    </form>
+
+    <div id="tela-etiqueta">
+        <div id="etiqueta-container">
+            <div class="header">
+                <img src="logo.png" alt="Logo Sodramar" class="logo-placeholder">
+                <h1>Ficha Cadastral</h1>
+            </div>
+
+            <div class="lgpd-text">
+                SODRAMAR INDÚSTRIA E COMÉRCIO LTDA, inscrita no CNPJ n° 51.333.797/0001-80 e Inscrição Estadual n° 286.079.882.115, com sede na Rua Caramuru, 925 – Vila Conceição – Diadema/SP – CEP 09911-510, em conformidade com sua Política de Privacidade e nos termos do art. 5°, inciso XII, da Lei n° 13.709/2018 (LGPD), solicita seu consentimento para o tratamento de seus dados pessoais.<br><br>
+                Os dados poderão ser armazenados pelo período necessário à manutenção da relação jurídica ou validade do cadastro, bem como compartilhados com entidades parceiras quando indispensável, visando: Formação e atualização de cadastro; Interação e tratamento de dados pelo setor S.A.S.; Processos de aquisição de bens e serviços de assistência técnica da empresa controladora.<br><br>
+                Você mantém todos os direitos de acesso, correção, revogação do consentimento ou oposição ao uso de dados, bastando entrar em contato pelo e-mail: <b>dpo@sodramar.com.br</b>.
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="lbl-titulo">Consumidor Final</div>
+                    <div id="out-nome" class="dado-etiqueta"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="lbl-titulo">CNPJ / CPF</div>
+                    <div id="out-doc1" class="dado-etiqueta"></div>
+                </div>
+                <div class="col">
+                    <div class="lbl-titulo">Inscrição Estadual / RG</div>
+                    <div id="out-doc2" class="dado-etiqueta"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="lbl-titulo">Data de Nascimento</div>
+                    <div id="out-nasc" class="dado-etiqueta"></div>
+                </div>
+                <div class="col">
+                    <div class="lbl-titulo">Telefone</div>
+                    <div id="out-tel" class="dado-etiqueta"></div>
+                </div>
+                <div class="col">
+                    <div class="lbl-titulo">Celular</div>
+                    <div id="out-cel" class="dado-etiqueta"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="lbl-titulo">E-mail</div>
+                    <div id="out-email" class="dado-etiqueta"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col" style="flex: 2;">
+                    <div class="lbl-titulo">Endereço</div>
+                    <div id="out-endereco" class="dado-etiqueta"></div>
+                </div>
+                <div class="col" style="flex: 1;">
+                    <div class="lbl-titulo">Complemento</div>
+                    <div id="out-comp" class="dado-etiqueta"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col" style="flex: 2;">
+                    <div class="lbl-titulo">Bairro</div>
+                    <div id="out-bairro" class="dado-etiqueta"></div>
+                </div>
+                <div class="col" style="flex: 2;">
+                    <div class="lbl-titulo">Cidade</div>
+                    <div id="out-cidade" class="dado-etiqueta"></div>
+                </div>
+                <div class="col" style="flex: 1;">
+                    <div class="lbl-titulo">Estado</div>
+                    <div id="out-estado" class="dado-etiqueta"></div>
+                </div>
+                <div class="col" style="flex: 1.5;">
+                    <div class="lbl-titulo">CEP</div>
+                    <div id="out-cep" class="dado-etiqueta"></div>
+                </div>
+            </div>
+
+            <div class="footer-autorizacao">
+                Autorização para Cadastro e Contrato de Prestação de Serviço de Assistência Técnica – S.A.S.
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn-voltar" onclick="voltarFormulario()">⬅️ Voltar e Editar</button>
+            <button class="btn-print" onclick="window.print()">🖨️ Imprimir Ficha</button>
+            <button class="btn-share" onclick="compartilharPDF()">🔗 Compartilhar (WhatsApp/Email)</button>
+        </div>
+    </div>
+
+    <script>
+        function gerarEtiqueta(event) {
+            event.preventDefault();
+
+            // Pega os valores do formulário
+            document.getElementById('out-nome').innerText = document.getElementById('in-nome').value;
+            document.getElementById('out-doc1').innerText = document.getElementById('in-doc1').value;
+            document.getElementById('out-doc2').innerText = document.getElementById('in-doc2').value;
+            document.getElementById('out-tel').innerText = document.getElementById('in-tel').value;
+            document.getElementById('out-cel').innerText = document.getElementById('in-cel').value;
+            document.getElementById('out-email').innerText = document.getElementById('in-email').value;
+            document.getElementById('out-endereco').innerText = document.getElementById('in-endereco').value;
+            document.getElementById('out-comp').innerText = document.getElementById('in-comp').value || '-';
+            document.getElementById('out-bairro').innerText = document.getElementById('in-bairro').value;
+            document.getElementById('out-cidade').innerText = document.getElementById('in-cidade').value;
+            document.getElementById('out-estado').innerText = document.getElementById('in-estado').value.toUpperCase();
+            document.getElementById('out-cep').innerText = document.getElementById('in-cep').value;
+
+            // Formata a data (de YYYY-MM-DD para DD/MM/YYYY)
+            const dataInput = document.getElementById('in-nasc').value;
+            if(dataInput) {
+                const [ano, mes, dia] = dataInput.split('-');
+                document.getElementById('out-nasc').innerText = `${dia}/${mes}/${ano}`;
+            } else {
+                document.getElementById('out-nasc').innerText = '-';
+            }
+
+            // Esconde formulário, mostra ficha
+            document.getElementById('tela-formulario').style.display = 'none';
+            document.getElementById('tela-etiqueta').style.display = 'flex';
+        }
+
+        function voltarFormulario() {
+            document.getElementById('tela-etiqueta').style.display = 'none';
+            document.getElementById('tela-formulario').style.display = 'block';
+        }
+
+        const pdfOptions = {
+            margin:       0.5,
+            filename:     'Ficha_Cadastral_Sodramar.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        async function compartilharPDF() {
+            const element = document.getElementById('etiqueta-container');
+            
+            try {
+                // Gera o PDF ocultamente como Blob
+                const pdfBlob = await html2pdf().set(pdfOptions).from(element).output('blob');
+                const file = new File([pdfBlob], "Ficha_Cadastral_Sodramar.pdf", { type: "application/pdf" });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Ficha Cadastral - Sodramar',
+                        text: 'Segue a ficha cadastral preenchida.',
+                        files: [file]
+                    });
+                } else {
+                    // Se o navegador barrar o compartilhamento (por estar offline ou no Windows), avisa e baixa o arquivo
+                    alert("O seu navegador bloqueou o compartilhamento direto (comum ao abrir o arquivo direto da pasta no computador).\n\nO documento será baixado para você enviá-lo manualmente.");
+                    html2pdf().set(pdfOptions).from(element).save();
+                }
+            } catch (error) {
+                console.error("Erro ao tentar compartilhar:", error);
+                alert("Ocorreu um bloqueio de segurança ao tentar compartilhar. O documento será baixado em vez disso.");
+                html2pdf().set(pdfOptions).from(element).save();
+            }
+        }
+    </script>
+
+</body>
+</html>
